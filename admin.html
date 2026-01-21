@@ -1198,46 +1198,50 @@
 
         // REGISTRAR COMPRA
         async function registrarCompra(e) {
-            e.preventDefault();
-
-            const compraData = {
-                action: 'addCompra',
-                id: Date.now(),
-                fecha: new Date().toISOString().split('T')[0],
-                proveedor: document.getElementById('compraProveedor').value,
-                servicio: document.getElementById('compraServicio').value,
-                email: document.getElementById('compraEmail').value,
-                password: document.getElementById('compraPassword').value,
-                pin: document.getElementById('compraPin').value,
-                perfiles: parseInt(document.getElementById('compraPerfiles').value),
-                precio: parseFloat(document.getElementById('compraPrecio').value),
-                metodoPago: document.getElementById('compraMetodo').value,
-                vencimiento: calcularVencimiento(new Date()),
-                estado: 'ACTIVO'
-            };
-
-            try {
-                const formData = new URLSearchParams(compraData);
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    mostrarAlerta('compraAlert', 'success', '✅ Compra registrada exitosamente');
-                    document.getElementById('compraForm').reset();
-                    await cargarCompras();
-                } else {
-                    throw new Error(data.message || 'Error al guardar');
-                }
-
-            } catch (error) {
-                console.error('Error:', error);
-                mostrarAlerta('compraAlert', 'error', '❌ Error al guardar: ' + error.message);
-            }
+    e.preventDefault();
+    
+    const compraData = {
+        action: 'addCompra',
+        id: Date.now(),
+        fecha: new Date().toISOString().split('T')[0],
+        proveedor: document.getElementById('compraProveedor').value,
+        servicio: document.getElementById('compraServicio').value,
+        email: document.getElementById('compraEmail').value,
+        password: document.getElementById('compraPassword').value,
+        pin: document.getElementById('compraPin').value,
+        perfiles: parseInt(document.getElementById('compraPerfiles').value),
+        precio: parseFloat(document.getElementById('compraPrecio').value),
+        metodoPago: document.getElementById('compraMetodo').value,
+        vencimiento: calcularVencimiento(new Date()),
+        estado: 'ACTIVO'
+    };
+    
+    try {
+        // CORREGIDO: Enviar como JSON
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(compraData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            mostrarAlerta('compraAlert', 'success', '✅ Compra registrada exitosamente');
+            document.getElementById('compraForm').reset();
+            await cargarCompras();
+        } else {
+            throw new Error(data.message || 'Error al guardar');
         }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarAlerta('compraAlert', 'error', '❌ Error al guardar: ' + error.message);
+    }
+}
+
 
         // ACTUALIZAR DASHBOARD
         function actualizarDashboard() {
