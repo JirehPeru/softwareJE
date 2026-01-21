@@ -1217,13 +1217,10 @@
     };
     
     try {
-        // CORREGIDO: Enviar como JSON
+        const formData = new URLSearchParams(compraData);
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(compraData)
+            body: formData
         });
         
         const data = await response.json();
@@ -1241,6 +1238,7 @@
         mostrarAlerta('compraAlert', 'error', '❌ Error al guardar: ' + error.message);
     }
 }
+
 
 
         // ACTUALIZAR DASHBOARD
