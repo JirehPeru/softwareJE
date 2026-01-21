@@ -686,14 +686,33 @@
             document.getElementById('ventaForm').reset();
             actualizarDashboard();
             
-            setTimeout(() => {
-                showTab('mensajes');
-                document.getElementById('msgCliente').value = venta.cliente;
-                document.getElementById('msgServicio').value = venta.servicio;
-                if (venta.cuenta) document.getElementById('msgEmail').value = venta.cuenta;
-                if (venta.perfil) document.getElementById('msgPerfil').value = venta.perfil;
-                if (venta.pin) document.getElementById('msgPin').value = venta.pin;
-            }, 1500);
+                        setTimeout(() => {
+                // Cambiar a la pestaña de mensajes
+                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                
+                document.getElementById('mensajes').classList.add('active');
+                
+                // Activar el botón correcto
+                const tabs = document.querySelectorAll('.tab');
+                if (tabs.length >= 3) tabs[2].classList.add('active');
+                
+                // ESPERAR a que el DOM esté listo antes de llenar
+                setTimeout(() => {
+                    const clienteInput = document.getElementById('msgCliente');
+                    const servicioSelect = document.getElementById('msgServicio');
+                    const emailInput = document.getElementById('msgEmail');
+                    const perfilInput = document.getElementById('msgPerfil');
+                    const pinInput = document.getElementById('msgPin');
+                    
+                    if (clienteInput) clienteInput.value = venta.cliente;
+                    if (servicioSelect) servicioSelect.value = venta.servicio;
+                    if (emailInput && venta.cuenta) emailInput.value = venta.cuenta;
+                    if (perfilInput && venta.perfil) perfilInput.value = venta.perfil;
+                    if (pinInput && venta.pin) pinInput.value = venta.pin;
+                }, 100);
+            }, 500);
+
         }
 
         // Generar mensaje
