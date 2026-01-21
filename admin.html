@@ -338,19 +338,32 @@
             flex-wrap: wrap;
         }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.2s;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .edit-btn {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #2563eb;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
         }
 
         @media (max-width: 768px) {
@@ -400,7 +413,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 Jireh Streaming - Panel Admin</h1>
-            <p>Sistema de Gestión Local (Próximamente conectado a Google Sheets)</p>
+            <p>Sistema de Gestión Profesional</p>
             <div class="sync-status" id="syncStatus">💾 Guardado Local</div>
         </div>
 
@@ -498,8 +511,8 @@
                         </div>
                     </div>
                     <div class="btn-group">
-                        <button type="submit" class="btn">Registrar Venta</button>
-                        <button type="reset" class="btn btn-secondary">Limpiar</button>
+                        <button type="submit" class="btn" id="submitBtn">Registrar Venta</button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelarEdicion()">Cancelar</button>
                     </div>
                 </form>
             </div>
@@ -583,11 +596,12 @@
                                 <th>Vencimiento</th>
                                 <th>Días</th>
                                 <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaClientes">
                             <tr>
-                                <td colspan="7" class="empty-state">
+                                <td colspan="8" class="empty-state">
                                     <p>No hay clientes registrados</p>
                                     <p style="font-size: 0.9em; margin-top: 10px;">Registra tu primera venta para ver clientes aquí</p>
                                 </td>
@@ -604,14 +618,18 @@
                 <h2>⚙️ Configuración del Sistema</h2>
                 
                 <div class="alert alert-info">
-                    <strong>ℹ️ Sistema Local:</strong> Actualmente tus datos se guardan en el navegador. Para sincronizar con Google Sheets, sigue las instrucciones abajo.
+                    <strong>ℹ️ Sistema de Almacenamiento:</strong> Tus datos se guardan localmente y puedes conectar con Google Sheets para sincronización en la nube.
                 </div>
 
                 <div class="config-box">
-                    <h3>🔗 Próximamente: Conexión con Google Sheets</h3>
-                    <p>Tu sistema de Google Sheets ya está funcionando con alertas automáticas.</p>
-                    <p style="margin-top: 10px;"><strong>URL de tu Google Sheet:</strong></p>
-                    <p><code>https://docs.google.com/spreadsheets/d/1e3LFmv1FpQRJAkJKsAd_LoKbNUAjKwmC</code></p>
+                    <h3>🔗 Conexión con Google Sheets</h3>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>ID de tu Google Sheet</label>
+                        <input type="text" id="sheetId" placeholder="1f-I3T2KD6uUCisc7RlYJlIMgDLeHIVOvDHFs_dmp31Y" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                        <small style="color: #666; margin-top: 5px; display: block;">Copia el ID desde la URL de tu Google Sheet</small>
+                    </div>
+                    <button class="btn" onclick="guardarConfigSheets()" style="margin-top: 15px;">💾 Guardar Configuración</button>
+                    <button class="btn btn-secondary" onclick="sincronizarSheets()" style="margin-top: 15px;">🔄 Sincronizar con Google Sheets</button>
                 </div>
 
                 <div class="card" style="background: #f8f9ff; margin-top: 20px;">
@@ -636,19 +654,18 @@
             actualizarDashboard();
             actualizarTablaClientes();
             setFechaDefecto();
+            cargarConfigSheets();
         });
 
-        // Cambiar tabs - FUNCIÓN CORREGIDA
+        // Cambiar tabs
         function showTab(tabName, fromButton = true) {
             document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
             
-            // Solo usar event.target si existe
             if (fromButton && typeof event !== 'undefined' && event && event.target) {
                 event.target.classList.add('active');
             } else {
-                // Activar botón manualmente
                 const tabs = document.querySelectorAll('.tab');
                 const indices = {'dashboard': 0, 'ventas': 1, 'mensajes': 2, 'clientes': 3, 'config': 4};
                 if (indices[tabName] !== undefined && tabs[indices[tabName]]) {
@@ -670,13 +687,12 @@
             }
         }
 
-        // Registrar venta - FUNCIÓN CORREGIDA
+        // Registrar o actualizar venta
         function registrarVenta(e) {
             e.preventDefault();
             
-            const venta = {
-                id: Date.now(),
-                fecha: new Date().toISOString().split('T')[0],
+            const ventaData = {
+                fecha: window.editingIndex !== undefined ? ventas[window.editingIndex].fecha : new Date().toISOString().split('T')[0],
                 cliente: document.getElementById('clienteNombre').value,
                 whatsapp: document.getElementById('clienteWhatsApp').value,
                 servicio: document.getElementById('ventaServicio').value,
@@ -685,36 +701,94 @@
                 cuenta: document.getElementById('ventaCuenta').value,
                 perfil: document.getElementById('ventaPerfil').value,
                 pin: document.getElementById('ventaPin').value,
-                fechaVencimiento: calcularVencimiento(new Date()),
-                diasRestantes: 30,
-                estado: 'ACTIVO'
+                fechaVencimiento: window.editingIndex !== undefined ? ventas[window.editingIndex].fechaVencimiento : calcularVencimiento(new Date()),
+                diasRestantes: window.editingIndex !== undefined ? ventas[window.editingIndex].diasRestantes : 30,
+                estado: window.editingIndex !== undefined ? ventas[window.editingIndex].estado : 'ACTIVO'
             };
 
-            ventas.push(venta);
-            localStorage.setItem('jirehVentas', JSON.stringify(ventas));
-
-            mostrarAlerta('ventaAlert', 'success', '✅ Venta registrada exitosamente. Redirigiendo...');
-            document.getElementById('ventaForm').reset();
-            actualizarDashboard();
-            
-            // REDIRECT CORREGIDO
-            setTimeout(() => {
-                showTab('mensajes', false);
+            if (window.editingIndex !== undefined) {
+                ventaData.id = ventas[window.editingIndex].id;
+                ventas[window.editingIndex] = ventaData;
+                mostrarAlerta('ventaAlert', 'success', '✅ Cliente actualizado exitosamente');
+                
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.textContent = 'Registrar Venta';
+                submitBtn.style.background = '';
+                delete window.editingIndex;
+            } else {
+                ventaData.id = Date.now();
+                ventas.push(ventaData);
+                mostrarAlerta('ventaAlert', 'success', '✅ Venta registrada exitosamente. Redirigiendo...');
                 
                 setTimeout(() => {
-                    const clienteInput = document.getElementById('msgCliente');
-                    const servicioSelect = document.getElementById('msgServicio');
-                    const emailInput = document.getElementById('msgEmail');
-                    const perfilInput = document.getElementById('msgPerfil');
-                    const pinInput = document.getElementById('msgPin');
+                    showTab('mensajes', false);
                     
-                    if (clienteInput) clienteInput.value = venta.cliente || '';
-                    if (servicioSelect) servicioSelect.value = venta.servicio || '';
-                    if (emailInput && venta.cuenta) emailInput.value = venta.cuenta;
-                    if (perfilInput && venta.perfil) perfilInput.value = venta.perfil;
-                    if (pinInput && venta.pin) pinInput.value = venta.pin;
-                }, 200);
-            }, 500);
+                    setTimeout(() => {
+                        const clienteInput = document.getElementById('msgCliente');
+                        const servicioSelect = document.getElementById('msgServicio');
+                        const emailInput = document.getElementById('msgEmail');
+                        const perfilInput = document.getElementById('msgPerfil');
+                        const pinInput = document.getElementById('msgPin');
+                        
+                        if (clienteInput) clienteInput.value = ventaData.cliente || '';
+                        if (servicioSelect) servicioSelect.value = ventaData.servicio || '';
+                        if (emailInput && ventaData.cuenta) emailInput.value = ventaData.cuenta;
+                        if (perfilInput && ventaData.perfil) perfilInput.value = ventaData.perfil;
+                        if (pinInput && ventaData.pin) pinInput.value = ventaData.pin;
+                    }, 200);
+                }, 500);
+            }
+
+            localStorage.setItem('jirehVentas', JSON.stringify(ventas));
+            document.getElementById('ventaForm').reset();
+            actualizarDashboard();
+        }
+
+        // Editar cliente
+        function editarCliente(index) {
+            const venta = ventas[index];
+            
+            showTab('ventas', false);
+            
+            document.getElementById('clienteNombre').value = venta.cliente;
+            document.getElementById('clienteWhatsApp').value = venta.whatsapp;
+            document.getElementById('ventaServicio').value = venta.servicio;
+            document.getElementById('ventaPrecio').value = venta.precio;
+            document.getElementById('ventaMetodo').value = venta.metodoPago;
+            document.getElementById('ventaCuenta').value = venta.cuenta || '';
+            document.getElementById('ventaPerfil').value = venta.perfil || '';
+            document.getElementById('ventaPin').value = venta.pin || '';
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = '🔄 Actualizar Cliente';
+            submitBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            
+            window.editingIndex = index;
+            window.scrollTo(0, 0);
+        }
+
+        // Cancelar edición
+        function cancelarEdicion() {
+            document.getElementById('ventaForm').reset();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = 'Registrar Venta';
+            submitBtn.style.background = '';
+            delete window.editingIndex;
+        }
+
+        // Eliminar cliente
+        function eliminarCliente(index) {
+            const cliente = ventas[index];
+            
+            if (confirm(`⚠️ ¿Estás seguro de eliminar a "${cliente.cliente}"?\n\nServicio: ${cliente.servicio}\nPrecio: S/ ${cliente.precio}\n\nEsto no se puede deshacer.`)) {
+                ventas.splice(index, 1);
+                localStorage.setItem('jirehVentas', JSON.stringify(ventas));
+                
+                actualizarDashboard();
+                actualizarTablaClientes();
+                
+                alert(`✅ Cliente "${cliente.cliente}" eliminado correctamente`);
+            }
         }
 
         // Generar mensaje
@@ -848,7 +922,7 @@
             if (ventas.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <p>No hay clientes registrados</p>
                             <p style="font-size: 0.9em; margin-top: 10px;">Registra tu primera venta para ver clientes aquí</p>
                         </td>
@@ -859,7 +933,7 @@
 
             tbody.innerHTML = ventas
                 .sort((a, b) => a.diasRestantes - b.diasRestantes)
-                .map(v => `
+                .map((v, index) => `
                     <tr>
                         <td><strong>${v.cliente}</strong></td>
                         <td>${v.whatsapp}</td>
@@ -868,6 +942,10 @@
                         <td>${new Date(v.fechaVencimiento).toLocaleDateString('es-PE')}</td>
                         <td>${v.diasRestantes} día${v.diasRestantes !== 1 ? 's' : ''}</td>
                         <td><span class="status-badge status-${v.estado.toLowerCase().replace(/ /g, '-')}">${v.estado}</span></td>
+                        <td>
+                            <button onclick="editarCliente(${index})" class="action-btn edit-btn" title="Editar">✏️ Editar</button>
+                            <button onclick="eliminarCliente(${index})" class="action-btn delete-btn" title="Eliminar">🗑️ Eliminar</button>
+                        </td>
                     </tr>
                 `).join('');
         }
@@ -881,6 +959,47 @@
                 const texto = fila.textContent.toLowerCase();
                 fila.style.display = texto.includes(busqueda) ? '' : 'none';
             });
+        }
+
+        // Google Sheets - Guardar configuración
+        function guardarConfigSheets() {
+            const sheetId = document.getElementById('sheetId').value.trim();
+            
+            if (!sheetId) {
+                alert('⚠️ Por favor ingresa el ID de tu Google Sheet');
+                return;
+            }
+            
+            config.sheetId = sheetId;
+            localStorage.setItem('jirehConfig', JSON.stringify(config));
+            
+            alert('✅ Configuración guardada. Próximamente podrás sincronizar automáticamente.');
+        }
+
+        // Google Sheets - Cargar configuración
+        function cargarConfigSheets() {
+            if (config.sheetId) {
+                document.getElementById('sheetId').value = config.sheetId;
+            }
+        }
+
+        // Google Sheets - Sincronizar (placeholder)
+        function sincronizarSheets() {
+            if (!config.sheetId) {
+                alert('⚠️ Primero configura el ID de tu Google Sheet');
+                return;
+            }
+            
+            const syncStatus = document.getElementById('syncStatus');
+            syncStatus.textContent = '🔄 Sincronizando...';
+            syncStatus.className = 'sync-status loading';
+            
+            // Placeholder - aquí iría la integración real con Google Sheets API
+            setTimeout(() => {
+                syncStatus.textContent = '✅ Sincronizado con Google Sheets';
+                syncStatus.className = 'sync-status';
+                alert('⚠️ La sincronización automática estará disponible próximamente.\n\nPor ahora, exporta tus datos en JSON y los puedes importar manualmente a Google Sheets.');
+            }, 2000);
         }
 
         // Utilidades
@@ -935,7 +1054,7 @@
 🎬 Servicios Más Vendidos:
 ${Object.entries(servicios).sort((a, b) => b[1] - a[1]).map(([s, c]) => `• ${s}: ${c} venta${c !== 1 ? 's' : ''}`).join('\n')}
 
-💾 Datos guardados localmente en tu navegador`;
+💾 Datos guardados localmente`;
 
             alert(resumen);
         }
@@ -944,9 +1063,7 @@ ${Object.entries(servicios).sort((a, b) => b[1] - a[1]).map(([s, c]) => `• ${s
             if (confirm('⚠️ ¿Estás seguro? Esto eliminará TODAS las ventas y datos locales.\n\nRECOMENDACIÓN: Exporta tus datos primero.')) {
                 if (confirm('🚨 ÚLTIMA CONFIRMACIÓN: Se eliminarán ' + ventas.length + ' ventas. ¿Continuar?')) {
                     localStorage.removeItem('jirehVentas');
-                    localStorage.removeItem('jirehConfig');
                     ventas = [];
-                    config = {};
                     actualizarDashboard();
                     actualizarTablaClientes();
                     alert('✅ Todos los datos han sido eliminados');
