@@ -18,6 +18,117 @@
             padding: 20px;
         }
 
+        /* PANTALLA DE LOGIN */
+        #loginScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 9999;
+        }
+
+        .login-container {
+            background: white;
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .login-container p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .password-input-group {
+            position: relative;
+        }
+
+        .password-input-group input {
+            width: 100%;
+            padding: 18px 50px 18px 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+
+        .password-input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .login-error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #ef4444;
+            display: none;
+            font-weight: 600;
+        }
+
+        .login-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        /* PANEL PRINCIPAL */
+        #mainPanel {
+            display: none;
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -30,6 +141,7 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             margin-bottom: 30px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
@@ -41,6 +153,25 @@
         .header p {
             color: #666;
             font-size: 1.1em;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
         }
 
         .sync-status {
@@ -386,6 +517,12 @@
                 font-size: 1.8em;
             }
 
+            .logout-btn {
+                position: static;
+                margin-top: 15px;
+                width: 100%;
+            }
+
             .tabs {
                 flex-direction: column;
             }
@@ -401,223 +538,311 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+
+            .login-container {
+                padding: 30px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎬 Jireh Streaming - Panel Admin</h1>
-            <p>Sistema 100% Google Sheets</p>
-            <div class="sync-status" id="syncStatus">☁️ Conectado a Google Sheets</div>
+    <!-- PANTALLA DE LOGIN -->
+    <div id="loginScreen">
+        <div class="login-container">
+            <div class="login-icon">🔐</div>
+            <h1>Panel Admin</h1>
+            <p>Ingresa tu contraseña para continuar</p>
+            <div class="login-error" id="loginError">❌ Contraseña incorrecta</div>
+            <form class="login-form" onsubmit="login(event)">
+                <div class="password-input-group">
+                    <input type="password" id="passwordInput" placeholder="Contraseña" required autofocus>
+                    <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+                </div>
+                <button type="submit" class="login-btn">🔓 Acceder</button>
+            </form>
         </div>
+    </div>
 
-        <div class="tabs">
-            <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
-            <button class="tab" onclick="showTab('ventas')">💰 Nueva Venta</button>
-            <button class="tab" onclick="showTab('mensajes')">💬 Generar Mensaje</button>
-            <button class="tab" onclick="showTab('clientes')">👥 Clientes</button>
-        </div>
+    <!-- PANEL PRINCIPAL -->
+    <div id="mainPanel">
+        <div class="container">
+            <div class="header">
+                <button class="logout-btn" onclick="logout()">🚪 Cerrar Sesión</button>
+                <h1>🎬 Jireh Streaming - Panel Admin</h1>
+                <p>Sistema 100% Google Sheets</p>
+                <div class="sync-status" id="syncStatus">☁️ Conectado a Google Sheets</div>
+            </div>
 
-        <!-- Dashboard -->
-        <div id="dashboard" class="content active">
-            <div id="loadingDashboard" class="loader"></div>
-            <div id="dashboardContent" style="display:none;">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3 id="totalVentas">0</h3>
-                        <p>Ventas Totales</p>
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+                <button class="tab" onclick="showTab('ventas')">💰 Nueva Venta</button>
+                <button class="tab" onclick="showTab('mensajes')">💬 Generar Mensaje</button>
+                <button class="tab" onclick="showTab('clientes')">👥 Clientes</button>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="content active">
+                <div id="loadingDashboard" class="loader"></div>
+                <div id="dashboardContent" style="display:none;">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3 id="totalVentas">0</h3>
+                            <p>Ventas Totales</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="ventasActivas">0</h3>
+                            <p>Cuentas Activas</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="ventasPorVencer">0</h3>
+                            <p>Por Vencer (3 días)</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="gananciasMes">S/ 0</h3>
+                            <p>Ganancias del Mes</p>
+                        </div>
                     </div>
-                    <div class="stat-card">
-                        <h3 id="ventasActivas">0</h3>
-                        <p>Cuentas Activas</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="ventasPorVencer">0</h3>
-                        <p>Por Vencer (3 días)</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="gananciasMes">S/ 0</h3>
-                        <p>Ganancias del Mes</p>
+
+                    <div class="card">
+                        <h2>⚠️ Alertas de Renovación</h2>
+                        <div id="alertasRenovacion">
+                            <p class="empty-state">No hay alertas de renovación</p>
+                        </div>
                     </div>
                 </div>
+            </div>
 
+            <!-- Nueva Venta -->
+            <div id="ventas" class="content">
                 <div class="card">
-                    <h2>⚠️ Alertas de Renovación</h2>
-                    <div id="alertasRenovacion">
-                        <p class="empty-state">No hay alertas de renovación</p>
+                    <h2>💰 Registrar Nueva Venta</h2>
+                    <div id="ventaAlert"></div>
+                    <form id="ventaForm" onsubmit="registrarVenta(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre del Cliente *</label>
+                                <input type="text" id="clienteNombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label>WhatsApp *</label>
+                                <input type="tel" id="clienteWhatsApp" placeholder="51905989258" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Servicio *</label>
+                                <select id="ventaServicio" required onchange="actualizarPrecio()">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Netflix" data-precio="15">Netflix - S/ 15</option>
+                                    <option value="Disney+" data-precio="12">Disney+ - S/ 12</option>
+                                    <option value="HBO Max" data-precio="10">HBO Max - S/ 10</option>
+                                    <option value="Spotify" data-precio="13">Spotify - S/ 13</option>
+                                    <option value="Prime Video" data-precio="10">Prime Video - S/ 10</option>
+                                    <option value="Crunchyroll" data-precio="8">Crunchyroll - S/ 8</option>
+                                    <option value="Canva Pro" data-precio="11">Canva Pro - S/ 11</option>
+                                    <option value="ChatGPT Plus" data-precio="15">ChatGPT Plus - S/ 15</option>
+                                    <option value="Paramount+" data-precio="10">Paramount+ - S/ 10</option>
+                                    <option value="Apple TV" data-precio="8">Apple TV - S/ 8</option>
+                                    <option value="Youtube Premium" data-precio="12">Youtube Premium - S/ 12</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Precio (S/) *</label>
+                                <input type="number" id="ventaPrecio" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Método de Pago *</label>
+                                <select id="ventaMetodo" required>
+                                    <option value="YAPE">YAPE</option>
+                                    <option value="PLIN">PLIN</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Cuenta Usada</label>
+                                <input type="text" id="ventaCuenta" placeholder="usuario@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Perfil Asignado</label>
+                                <input type="text" id="ventaPerfil" placeholder="P1">
+                            </div>
+                            <div class="form-group">
+                                <label>PIN (opcional)</label>
+                                <input type="text" id="ventaPin" placeholder="1234">
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn" id="submitBtn">Registrar Venta</button>
+                            <button type="button" class="btn btn-secondary" onclick="cancelarEdicion()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Generar Mensaje -->
+            <div id="mensajes" class="content">
+                <div class="card">
+                    <h2>💬 Generador de Mensajes para Clientes</h2>
+                    <div id="mensajeAlert"></div>
+                    <form id="mensajeForm" onsubmit="generarMensaje(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Nombre del Cliente *</label>
+                                <input type="text" id="msgCliente" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Servicio *</label>
+                                <select id="msgServicio" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Netflix">Netflix</option>
+                                    <option value="Disney+">Disney+</option>
+                                    <option value="HBO Max">HBO Max</option>
+                                    <option value="Spotify">Spotify</option>
+                                    <option value="Prime Video">Prime Video</option>
+                                    <option value="Crunchyroll">Crunchyroll</option>
+                                    <option value="Canva Pro">Canva Pro</option>
+                                    <option value="ChatGPT Plus">ChatGPT Plus</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Email/Usuario *</label>
+                                <input type="text" id="msgEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Contraseña *</label>
+                                <input type="text" id="msgPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label>PIN (opcional)</label>
+                                <input type="text" id="msgPin" placeholder="1234">
+                            </div>
+                            <div class="form-group">
+                                <label>Perfil (opcional)</label>
+                                <input type="text" id="msgPerfil" placeholder="P1, P2, P3...">
+                            </div>
+                            <div class="form-group">
+                                <label>Válido hasta *</label>
+                                <input type="date" id="msgFecha" required>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn">Generar Mensaje</button>
+                            <button type="reset" class="btn btn-secondary">Limpiar</button>
+                        </div>
+                    </form>
+
+                    <div id="mensajeGenerado" style="display: none;">
+                        <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 15px;">📱 Mensaje Generado:</h3>
+                        <div class="message-box">
+                            <button class="copy-btn" onclick="copiarMensaje()">📋 Copiar</button>
+                            <div id="mensajeTexto"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Nueva Venta -->
-        <div id="ventas" class="content">
-            <div class="card">
-                <h2>💰 Registrar Nueva Venta</h2>
-                <div id="ventaAlert"></div>
-                <form id="ventaForm" onsubmit="registrarVenta(event)">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nombre del Cliente *</label>
-                            <input type="text" id="clienteNombre" required>
-                        </div>
-                        <div class="form-group">
-                            <label>WhatsApp *</label>
-                            <input type="tel" id="clienteWhatsApp" placeholder="51905989258" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Servicio *</label>
-                            <select id="ventaServicio" required onchange="actualizarPrecio()">
-                                <option value="">Seleccionar...</option>
-                                <option value="Netflix" data-precio="15">Netflix - S/ 15</option>
-                                <option value="Disney+" data-precio="12">Disney+ - S/ 12</option>
-                                <option value="HBO Max" data-precio="10">HBO Max - S/ 10</option>
-                                <option value="Spotify" data-precio="13">Spotify - S/ 13</option>
-                                <option value="Prime Video" data-precio="10">Prime Video - S/ 10</option>
-                                <option value="Crunchyroll" data-precio="8">Crunchyroll - S/ 8</option>
-                                <option value="Canva Pro" data-precio="11">Canva Pro - S/ 11</option>
-                                <option value="ChatGPT Plus" data-precio="15">ChatGPT Plus - S/ 15</option>
-                                <option value="Paramount+" data-precio="10">Paramount+ - S/ 10</option>
-                                <option value="Apple TV" data-precio="8">Apple TV - S/ 8</option>
-                                <option value="Youtube Premium" data-precio="12">Youtube Premium - S/ 12</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Precio (S/) *</label>
-                            <input type="number" id="ventaPrecio" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Método de Pago *</label>
-                            <select id="ventaMetodo" required>
-                                <option value="YAPE">YAPE</option>
-                                <option value="PLIN">PLIN</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Cuenta Usada</label>
-                            <input type="text" id="ventaCuenta" placeholder="usuario@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Perfil Asignado</label>
-                            <input type="text" id="ventaPerfil" placeholder="P1">
-                        </div>
-                        <div class="form-group">
-                            <label>PIN (opcional)</label>
-                            <input type="text" id="ventaPin" placeholder="1234">
-                        </div>
+            <!-- Clientes -->
+            <div id="clientes" class="content">
+                <div class="card">
+                    <h2>👥 Lista de Clientes</h2>
+                    <input type="text" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; margin-bottom: 20px;" placeholder="🔍 Buscar cliente..." id="searchClientes" onkeyup="buscarClientes()">
+                    <div id="loadingClientes" class="loader"></div>
+                    <div class="table-container" id="tablaClientesContainer" style="display:none;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>WhatsApp</th>
+                                    <th>Servicio</th>
+                                    <th>Precio</th>
+                                    <th>Vencimiento</th>
+                                    <th>Días</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaClientes"></tbody>
+                        </table>
                     </div>
-                    <div class="btn-group">
-                        <button type="submit" class="btn" id="submitBtn">Registrar Venta</button>
-                        <button type="button" class="btn btn-secondary" onclick="cancelarEdicion()">Cancelar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Generar Mensaje -->
-        <div id="mensajes" class="content">
-            <div class="card">
-                <h2>💬 Generador de Mensajes para Clientes</h2>
-                <div id="mensajeAlert"></div>
-                <form id="mensajeForm" onsubmit="generarMensaje(event)">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nombre del Cliente *</label>
-                            <input type="text" id="msgCliente" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Servicio *</label>
-                            <select id="msgServicio" required>
-                                <option value="">Seleccionar...</option>
-                                <option value="Netflix">Netflix</option>
-                                <option value="Disney+">Disney+</option>
-                                <option value="HBO Max">HBO Max</option>
-                                <option value="Spotify">Spotify</option>
-                                <option value="Prime Video">Prime Video</option>
-                                <option value="Crunchyroll">Crunchyroll</option>
-                                <option value="Canva Pro">Canva Pro</option>
-                                <option value="ChatGPT Plus">ChatGPT Plus</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Email/Usuario *</label>
-                            <input type="text" id="msgEmail" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Contraseña *</label>
-                            <input type="text" id="msgPassword" required>
-                        </div>
-                        <div class="form-group">
-                            <label>PIN (opcional)</label>
-                            <input type="text" id="msgPin" placeholder="1234">
-                        </div>
-                        <div class="form-group">
-                            <label>Perfil (opcional)</label>
-                            <input type="text" id="msgPerfil" placeholder="P1, P2, P3...">
-                        </div>
-                        <div class="form-group">
-                            <label>Válido hasta *</label>
-                            <input type="date" id="msgFecha" required>
-                        </div>
-                    </div>
-                    <div class="btn-group">
-                        <button type="submit" class="btn">Generar Mensaje</button>
-                        <button type="reset" class="btn btn-secondary">Limpiar</button>
-                    </div>
-                </form>
-
-                <div id="mensajeGenerado" style="display: none;">
-                    <h3 style="color: #667eea; margin-top: 30px; margin-bottom: 15px;">📱 Mensaje Generado:</h3>
-                    <div class="message-box">
-                        <button class="copy-btn" onclick="copiarMensaje()">📋 Copiar</button>
-                        <div id="mensajeTexto"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Clientes -->
-        <div id="clientes" class="content">
-            <div class="card">
-                <h2>👥 Lista de Clientes</h2>
-                <input type="text" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; margin-bottom: 20px;" placeholder="🔍 Buscar cliente..." id="searchClientes" onkeyup="buscarClientes()">
-                <div id="loadingClientes" class="loader"></div>
-                <div class="table-container" id="tablaClientesContainer" style="display:none;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>WhatsApp</th>
-                                <th>Servicio</th>
-                                <th>Precio</th>
-                                <th>Vencimiento</th>
-                                <th>Días</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaClientes"></tbody>
-                    </table>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // URL DE TU GOOGLE APPS SCRIPT
+        // ========================================
+        // CONFIGURACIÓN
+        // ========================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzt0UpqPiAdslwInIp_WWHkGIjZdAG1X9kTu87blet8CJvYcEyt_6EbXqMNdcqYoikE/exec';
+        
+        // 🔐 CONTRASEÑA DEL PANEL (CÁMBIALA AQUÍ)
+        const ADMIN_PASSWORD = 'jireh2026';
         
         let ventas = [];
         let editingId = null;
 
-        // Inicializar
+        // ========================================
+        // SISTEMA DE LOGIN
+        // ========================================
         window.addEventListener('load', () => {
-            cargarVentas();
-            setFechaDefecto();
+            checkSession();
         });
 
-        // Cargar ventas desde Google Sheets
+        function checkSession() {
+            const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+            if (isLoggedIn === 'true') {
+                showMainPanel();
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainPanel').style.display = 'none';
+            }
+        }
+
+        function login(e) {
+            e.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (password === ADMIN_PASSWORD) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                errorDiv.style.display = 'none';
+                showMainPanel();
+            } else {
+                errorDiv.style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        function showMainPanel() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainPanel').style.display = 'block';
+            cargarVentas();
+            setFechaDefecto();
+        }
+
+        function logout() {
+            if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+                sessionStorage.removeItem('adminLoggedIn');
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('mainPanel').style.display = 'none';
+                document.getElementById('passwordInput').value = '';
+            }
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const btn = event.target;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+
+        // ========================================
+        // FUNCIONES DEL PANEL (sin cambios)
+        // ========================================
+        
         async function cargarVentas() {
             try {
                 updateSyncStatus('loading', '🔄 Cargando datos...');
@@ -640,14 +865,12 @@
             }
         }
 
-        // Actualizar estado de sincronización
         function updateSyncStatus(status, message) {
             const statusEl = document.getElementById('syncStatus');
             statusEl.className = 'sync-status ' + status;
             statusEl.textContent = message;
         }
 
-        // Registrar nueva venta
         async function registrarVenta(e) {
             e.preventDefault();
             
@@ -713,7 +936,6 @@
             }
         }
 
-        // Editar cliente
         function editarCliente(id) {
             const venta = ventas.find(v => v.id == id);
             if (!venta) return;
@@ -737,7 +959,6 @@
             window.scrollTo(0, 0);
         }
 
-        // Cancelar edición
         function cancelarEdicion() {
             document.getElementById('ventaForm').reset();
             const submitBtn = document.getElementById('submitBtn');
@@ -746,7 +967,6 @@
             editingId = null;
         }
 
-        // Eliminar cliente
         async function eliminarCliente(id) {
             const venta = ventas.find(v => v.id == id);
             if (!venta) return;
@@ -780,7 +1000,6 @@
             }
         }
 
-        // Actualizar dashboard
         function actualizarDashboard() {
             document.getElementById('loadingDashboard').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
@@ -831,7 +1050,6 @@
             document.getElementById('alertasRenovacion').innerHTML = alertasHTML || '<p class="empty-state">No hay alertas de renovación</p>';
         }
 
-        // Actualizar tabla de clientes
         function actualizarTablaClientes() {
             document.getElementById('loadingClientes').style.display = 'none';
             document.getElementById('tablaClientesContainer').style.display = 'block';
@@ -869,7 +1087,6 @@
                 `).join('');
         }
 
-        // Cambiar tabs
         function showTab(tabName, fromButton = true) {
             document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -889,7 +1106,6 @@
             if (tabName === 'clientes') actualizarTablaClientes();
         }
 
-        // Generar mensaje
         function generarMensaje(e) {
             e.preventDefault();
 
@@ -948,7 +1164,6 @@
             mostrarAlerta('mensajeAlert', 'success', '✅ Mensaje generado. Click en "Copiar" para enviarlo por WhatsApp');
         }
 
-        // Copiar mensaje
         function copiarMensaje() {
             const mensaje = document.getElementById('mensajeTexto').textContent;
             navigator.clipboard.writeText(mensaje).then(() => {
@@ -963,7 +1178,6 @@
             });
         }
 
-        // Buscar clientes
         function buscarClientes() {
             const busqueda = document.getElementById('searchClientes').value.toLowerCase();
             const filas = document.querySelectorAll('#tablaClientes tr');
@@ -974,7 +1188,6 @@
             });
         }
 
-        // Utilidades
         function actualizarPrecio() {
             const select = document.getElementById('ventaServicio');
             const option = select.options[select.selectedIndex];
