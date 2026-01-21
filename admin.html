@@ -816,6 +816,11 @@
                                     <option value="Transferencia">Transferencia</option>
                                 </select>
                             </div>
+                                                    </div>
+                            <div class="form-group">
+                                <label>📅 Fecha de Vencimiento</label>
+                                <input type="date" id="compraFechaVencimiento" required>
+                            </div>
                         </div>
                         <div class="btn-group">
                             <button type="submit" class="btn">Registrar Compra</button>
@@ -1605,7 +1610,6 @@
             vencimiento.setDate(vencimiento.getDate() + 30);
             return vencimiento.toISOString().split('T')[0];
         }
-
         function setFechaDefecto() {
             const fecha = new Date();
             fecha.setDate(fecha.getDate() + 30);
