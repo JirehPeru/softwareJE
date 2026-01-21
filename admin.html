@@ -638,12 +638,23 @@
             setFechaDefecto();
         });
 
-        // Cambiar tabs
-        function showTab(tabName) {
+        // Cambiar tabs - FUNCIÓN CORREGIDA
+        function showTab(tabName, fromButton = true) {
             document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
+            
+            // Solo usar event.target si existe
+            if (fromButton && typeof event !== 'undefined' && event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Activar botón manualmente
+                const tabs = document.querySelectorAll('.tab');
+                const indices = {'dashboard': 0, 'ventas': 1, 'mensajes': 2, 'clientes': 3, 'config': 4};
+                if (indices[tabName] !== undefined && tabs[indices[tabName]]) {
+                    tabs[indices[tabName]].classList.add('active');
+                }
+            }
 
             if (tabName === 'dashboard') actualizarDashboard();
             if (tabName === 'clientes') actualizarTablaClientes();
@@ -659,7 +670,7 @@
             }
         }
 
-        // Registrar venta
+        // Registrar venta - FUNCIÓN CORREGIDA
         function registrarVenta(e) {
             e.preventDefault();
             
@@ -682,22 +693,14 @@
             ventas.push(venta);
             localStorage.setItem('jirehVentas', JSON.stringify(ventas));
 
-            mostrarAlerta('ventaAlert', 'success', '✅ Venta registrada exitosamente');
+            mostrarAlerta('ventaAlert', 'success', '✅ Venta registrada exitosamente. Redirigiendo...');
             document.getElementById('ventaForm').reset();
             actualizarDashboard();
             
-                        setTimeout(() => {
-                // Cambiar a la pestaña de mensajes
-                document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // REDIRECT CORREGIDO
+            setTimeout(() => {
+                showTab('mensajes', false);
                 
-                document.getElementById('mensajes').classList.add('active');
-                
-                // Activar el botón correcto
-                const tabs = document.querySelectorAll('.tab');
-                if (tabs.length >= 3) tabs[2].classList.add('active');
-                
-                // ESPERAR a que el DOM esté listo antes de llenar
                 setTimeout(() => {
                     const clienteInput = document.getElementById('msgCliente');
                     const servicioSelect = document.getElementById('msgServicio');
@@ -705,14 +708,13 @@
                     const perfilInput = document.getElementById('msgPerfil');
                     const pinInput = document.getElementById('msgPin');
                     
-                    if (clienteInput) clienteInput.value = venta.cliente;
-                    if (servicioSelect) servicioSelect.value = venta.servicio;
+                    if (clienteInput) clienteInput.value = venta.cliente || '';
+                    if (servicioSelect) servicioSelect.value = venta.servicio || '';
                     if (emailInput && venta.cuenta) emailInput.value = venta.cuenta;
                     if (perfilInput && venta.perfil) perfilInput.value = venta.perfil;
                     if (pinInput && venta.pin) pinInput.value = venta.pin;
-                }, 100);
+                }, 200);
             }, 500);
-
         }
 
         // Generar mensaje
