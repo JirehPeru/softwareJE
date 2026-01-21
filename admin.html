@@ -1217,6 +1217,7 @@
         perfiles: parseInt(document.getElementById('compraPerfiles').value),
         precio: parseFloat(document.getElementById('compraPrecio').value),
         metodoPago: document.getElementById('compraMetodo').value,
+        fechaVenc: document.getElementById('compraFechaVencimiento').value,
         vencimiento: calcularVencimiento(new Date()),
         estado: 'ACTIVO'
     };
