@@ -1241,68 +1241,83 @@
 
         // ACTUALIZAR DASHBOARD
         function actualizarDashboard() {
-            document.getElementById('loadingDashboard').style.display = 'none';
-            document.getElementById('dashboardContent').style.display = 'block';
-
-            const hoy = new Date();
-            const mesActual = hoy.getMonth();
-            const aoActual = hoy.getFullYear();
-
-            ventas.forEach(venta => {
-                const vencimiento = new Date(venta.fechaVencimiento);
-                const diff = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
-                venta.dias = diff;
-
-                if (diff <= 0) {
-                    venta.estado = 'VENCIDO';
-                } else if (diff <= 3) {
-                    venta.estado = 'POR VENCER';
-                } else if (diff <= 7) {
-                    venta.estado = 'PRÓXIMO';
-                } else {
-                    venta.estado = 'ACTIVO';
-                }
-            });
-
-            const activas = ventas.filter(v => v.estado === 'ACTIVO' || v.estado === 'PRÓXIMO').length;
-            const porVencer = ventas.filter(v => v.estado === 'POR VENCER').length;
-
-            const ventasMes = ventas.filter(v => {
-                if (!v.fechaVenta) return true;
-                try {
-                    const fecha = new Date(v.fechaVenta);
-                    return fecha.getMonth() === mesActual && fecha.getFullYear() === aoActual;
-                } catch {
-                    return true;
-                }
-            });
-
-            const gananciasMes = ventasMes.reduce((sum, v) => {
-                const precio = parseFloat(v.precio);
-                return sum + (isNaN(precio) ? 0 : precio);
-            }, 0);
-
-            document.getElementById('totalVentas').textContent = ventas.length;
-            document.getElementById('ventasActivas').textContent = activas;
-            document.getElementById('ventasPorVencer').textContent = porVencer;
-            document.getElementById('gananciasMes').textContent = 'S/ ' + gananciasMes.toFixed(2);
-
-            const alertasHTML = ventas
-                .filter(v => v.dias <= 7)
-                .sort((a, b) => a.dias - b.dias)
-                .map(v => {
-                    const tipo = v.dias <= 3 ? 'error' : 'warning';
-                    const emoji = v.dias <= 0 ? '⚫' : v.dias <= 3 ? '🔴' : '🟡';
-                    return `<div class="alert alert-${tipo}">
-                        ${emoji} <strong>${v.cliente}</strong> - ${v.servicio}
-                        ${v.dias <= 0 ? 'VENCIDO' : `vence en ${v.dias} día${v.dias !== 1 ? 's' : ''}`}
-                        ${v.whatsapp ? ` - WhatsApp: ${v.whatsapp}` : ''}
-                    </div>`;
-                })
-                .join('');
-
-            document.getElementById('alertasRenovacion').innerHTML = alertasHTML || '<p class="empty-state">No hay alertas de renovación</p>';
+    document.getElementById('loadingDashboard').style.display = 'none';
+    document.getElementById('dashboardContent').style.display = 'block';
+    
+    const hoy = new Date();
+    const mesActual = hoy.getMonth();
+    const aoActual = hoy.getFullYear();
+    
+    // Calcular días restantes y estado
+    ventas.forEach(venta => {
+        try {
+            // Convertir fecha de formato "21/01/2026" a objeto Date
+            const partes = venta.fechaVencimiento.toString().split('/');
+            let vencimiento;
+            
+            if (partes.length === 3) {
+                const dia = parseInt(partes[0]);
+                const mes = parseInt(partes[1]) - 1;
+                const anio = parseInt(partes[2]);
+                vencimiento = new Date(anio, mes, dia);
+            } else {
+                vencimiento = new Date(venta.fechaVencimiento);
+            }
+            
+            const diff = Math.ceil((vencimiento - hoy) / (1000 * 60 * 60 * 24));
+            venta.dias = diff;
+            
+            if (diff <= 0) {
+                venta.estado = 'VENCIDO';
+            } else if (diff <= 3) {
+                venta.estado = 'POR VENCER';
+            } else if (diff <= 7) {
+                venta.estado = 'PRÓXIMO';
+            } else {
+                venta.estado = 'ACTIVO';
+            }
+        } catch (error) {
+            console.error('Error calculando vencimiento:', error);
+            venta.dias = 0;
+            venta.estado = 'ERROR';
         }
+    });
+    
+    const activas = ventas.filter(v => v.estado === 'ACTIVO' || v.estado === 'PRÓXIMO').length;
+    const porVencer = ventas.filter(v => v.estado === 'POR VENCER').length;
+    
+    // CORREGIDO: Sumar TODOS los precios
+    const gananciasMes = ventas.reduce((sum, v) => {
+        const precio = parseFloat(v.precio);
+        return sum + (isNaN(precio) ? 0 : precio);
+    }, 0);
+    
+    console.log('Ventas:', ventas.length);
+    console.log('Ganancias calculadas:', gananciasMes);
+    
+    document.getElementById('totalVentas').textContent = ventas.length;
+    document.getElementById('ventasActivas').textContent = activas;
+    document.getElementById('ventasPorVencer').textContent = porVencer;
+    document.getElementById('gananciasMes').textContent = 'S/ ' + gananciasMes.toFixed(2);
+    
+    // Alertas
+    const alertasHTML = ventas
+        .filter(v => v.dias <= 7)
+        .sort((a, b) => a.dias - b.dias)
+        .map(v => {
+            const tipo = v.dias <= 3 ? 'error' : 'warning';
+            const emoji = v.dias <= 0 ? '⚫' : v.dias <= 3 ? '🔴' : '🟡';
+            return `<div class="alert alert-${tipo}">
+                ${emoji} <strong>${v.cliente}</strong> - ${v.servicio}
+                ${v.dias <= 0 ? 'VENCIDO' : `vence en ${v.dias} día${v.dias !== 1 ? 's' : ''}`}
+                ${v.whatsapp ? ` - WhatsApp: ${v.whatsapp}` : ''}
+            </div>`;
+        })
+        .join('');
+    
+    document.getElementById('alertasRenovacion').innerHTML = alertasHTML || '<p class="empty-state">No hay alertas de renovación</p>';
+}
+
 
         // ACTUALIZAR TABLA CLIENTES
         function actualizarTablaClientes() {
