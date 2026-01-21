@@ -618,7 +618,7 @@
                 <h2>⚙️ Configuración del Sistema</h2>
                 
                 <div class="alert alert-info">
-                    <strong>ℹ️ Sistema de Almacenamiento:</strong> Tus datos se guardan localmente y puedes conectar con Google Sheets para sincronización en la nube.
+                    <strong>ℹ️ Sistema de Almacenamiento:</strong> Tus datos se guardan localmente y puedes exportarlos a Google Sheets con un solo click.
                 </div>
 
                 <div class="config-box">
@@ -633,11 +633,12 @@
                 </div>
 
                 <div class="card" style="background: #f8f9ff; margin-top: 20px;">
-                    <h3 style="color: #667eea;">💾 Gestión de Datos Locales</h3>
+                    <h3 style="color: #667eea;">💾 Gestión de Datos</h3>
                     <div class="btn-group" style="margin-top: 15px;">
-                        <button class="btn" onclick="exportarDatos()">📥 Exportar Datos (JSON)</button>
-                        <button class="btn btn-secondary" onclick="limpiarDatos()">🗑️ Limpiar Todos los Datos</button>
+                        <button class="btn" onclick="crearGoogleSheetAutomatico()">🚀 Crear Google Sheet Automático</button>
+                        <button class="btn" onclick="exportarDatos()">📥 Exportar JSON</button>
                         <button class="btn btn-secondary" onclick="verResumen()">📊 Ver Resumen</button>
+                        <button class="btn btn-secondary" onclick="limpiarDatos()">🗑️ Limpiar Datos</button>
                     </div>
                 </div>
             </div>
@@ -994,12 +995,48 @@
             syncStatus.textContent = '🔄 Sincronizando...';
             syncStatus.className = 'sync-status loading';
             
-            // Placeholder - aquí iría la integración real con Google Sheets API
             setTimeout(() => {
                 syncStatus.textContent = '✅ Sincronizado con Google Sheets';
                 syncStatus.className = 'sync-status';
-                alert('⚠️ La sincronización automática estará disponible próximamente.\n\nPor ahora, exporta tus datos en JSON y los puedes importar manualmente a Google Sheets.');
+                alert('⚠️ La sincronización automática estará disponible próximamente.\n\nPor ahora, usa el botón "🚀 Crear Google Sheet Automático" para exportar tus datos.');
             }, 2000);
+        }
+
+        // Crear Google Sheet automáticamente (copiar/pegar)
+        function crearGoogleSheetAutomatico() {
+            if (ventas.length === 0) {
+                alert('⚠️ No hay datos para exportar. Registra al menos una venta primero.');
+                return;
+            }
+            
+            // Generar datos en formato TSV (Tab Separated Values)
+            let tsv = 'ID\tFecha\tCliente\tWhatsApp\tServicio\tPrecio\tMétodo Pago\tCuenta\tPerfil\tPIN\tVencimiento\tDías\tEstado\n';
+            
+            ventas.forEach(v => {
+                tsv += `${v.id}\t${v.fecha}\t${v.cliente}\t${v.whatsapp}\t${v.servicio}\tS/ ${v.precio.toFixed(2)}\t${v.metodoPago}\t${v.cuenta || ''}\t${v.perfil || ''}\t${v.pin || ''}\t${v.fechaVencimiento}\t${v.diasRestantes}\t${v.estado}\n`;
+            });
+            
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(tsv).then(() => {
+                alert(`✅ ¡DATOS COPIADOS AL PORTAPAPELES! (${ventas.length} ventas)
+
+📋 PASOS SIGUIENTES:
+
+1. ✅ Click en OK para abrir Google Sheets
+2. 📝 Se creará un nuevo Sheet vacío
+3. 📍 Click en la celda A1
+4. ⌨️ Pega con Ctrl+V (o Cmd+V en Mac)
+5. 🎉 ¡LISTO! Tus datos aparecerán automáticamente organizados en columnas
+
+⏱️ Tiempo total: 10 segundos`);
+                
+                // Abrir Google Sheets en nueva pestaña
+                window.open('https://sheets.google.com/create', '_blank');
+                
+            }).catch(err => {
+                alert('❌ Error al copiar. Intenta de nuevo o usa el botón "Exportar JSON"');
+                console.error(err);
+            });
         }
 
         // Utilidades
